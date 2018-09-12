@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
+
 
 public class ChatServer {
     static String URL = "127.0.0.1";
@@ -13,48 +13,47 @@ public class ChatServer {
 
     public static void main(String[] args) throws IOException {
 
-        Scanner scanner = new Scanner(System.in);
-        String message;
         ServerSocket server = new ServerSocket(SERVER_PORT);
         clients = new ArrayList<>();
 
         while(true) {
-            Socket socket = server.accept(); //это в отдельный класс и в поток
+            //ждем подключения клиента
+            Socket socket = server.accept();
             System.out.println("Client connected");
-            //ловим команды от подключившегося клиента
-            Integer port = null;
-            while (port == null) {
-                System.out.println(port);
-                InputStream fromClient = socket.getInputStream();
-                BufferedReader clientReader = new BufferedReader(new InputStreamReader(fromClient));
-                String messageClient = clientReader.readLine();
-                System.out.println("mess"+messageClient);
-                System.out.println(messageClient);
-                port = ChatServer.getPortFromMessage(messageClient);
-            }
+
+            //получаем от него служебную информацию
+            Integer port = ChatServer.getClientInfo(socket);
+            //запускаем поток для его прослушки
             ChatServer.appendClientThread(socket, port);
         }
 
     }
 
     static void appendClientThread(Socket socket, Integer port){
-        System.out.println("appendClientThread");
+        System.out.println("appendClientThread for:"+port);
         ChatServerThread client = new ChatServerThread(socket, port);
         client.start();
         clients.add(client);
     }
 
-    /**
-     * Мы можем вводить служебные сообщения. Примеры
-     * local_port:5002
-     */
+    static Integer getClientInfo(Socket socket) throws IOException {
+        Integer port = null;
+        InputStream fromClient = socket.getInputStream();
+        BufferedReader clientReader = new BufferedReader(new InputStreamReader(fromClient));
+        //ловим номер порта от подключившегося клиента
+        while (port == null) {
+            String messageClient = clientReader.readLine();
+            port = ChatServer.getPortFromMessage(messageClient);
+        }
+        return port;
+    }
+
     static Integer getPortFromMessage(String message) {
         String[] tokens = message.split("[:]");
         if (tokens.length == 2) {
             String command = tokens[0];
 
             if (command.equals("local_port")) {
-                System.out.println("local_port:" + tokens[1]);
                 return Integer.parseInt(tokens[1]);
             }
         }
@@ -62,14 +61,13 @@ public class ChatServer {
     }
 
     static void sendMessageForClients(String message, ChatServerThread initiator){
-        //рассылка сообщения по
+        //рассылка сообщения по клиентам
         System.out.println("sending messages");
         for(ChatServerThread client: clients){
-            System.out.println(client.getName());
             if(client.equals(initiator)){
-                //System.out.println("equals initiator");
                 continue;
             }
+            System.out.println(client.getName());
             client.sendMessage(message);
         }
     }

@@ -3,23 +3,22 @@ package ru.gluschenko.stc12.ls9;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
+
 
 public class ChaterInstance extends Thread{
     private Integer myPort;
     private String name;
-    private ServerSocket serverSocket;
+    private ServerSocket mySocket;
 
 
     public ChaterInstance() {
-        //ставим значение по-умолчанию, но надо задать командой
-        this.myPort = Chater.LOCAL_PORT;
+        this.name = "no name";
     }
 
     public void setPort(Integer port){
         this.myPort=port;
         try {
-            serverSocket = new ServerSocket(this.myPort);
+            mySocket = new ServerSocket(this.myPort);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,7 +42,7 @@ public class ChaterInstance extends Thread{
         System.out.println("start chat thread");
         try {
             //ловим то что нам шлет ChatServer, он у нас один, так что
-            Socket socket = serverSocket.accept();
+            Socket socket = mySocket.accept();
             System.out.println("Server connected");
 
             InputStream fromClient = socket.getInputStream();

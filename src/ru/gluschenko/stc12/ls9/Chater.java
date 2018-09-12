@@ -7,14 +7,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Chater {
-    public static String getURL() {
-        return URL;
-    }
-
-    static String URL = "127.0.0.1";
-    static Integer LOCAL_PORT = 5000;
     static ChaterInstance chat = new ChaterInstance();
-    static Socket socket = null;
+    static Socket serverSocket = null;
 
     private Chater() {
 
@@ -35,7 +29,7 @@ public class Chater {
 
         //подключаемся к серверу
         try {
-            socket = new Socket(ChatServer.URL, ChatServer.SERVER_PORT);
+            serverSocket = new Socket(ChatServer.URL, ChatServer.SERVER_PORT);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,7 +37,7 @@ public class Chater {
         //отправляем ему информацию о нашем порте, чтобы он мог нам слать ответ
         OutputStreamWriter serverOutput = null;
         try {
-            serverOutput = new OutputStreamWriter(socket.getOutputStream());
+            serverOutput = new OutputStreamWriter(serverSocket.getOutputStream());
             //если это не служебная команда, то отправляем на сервер
             BufferedWriter bufferedWriter = new BufferedWriter(serverOutput);
             bufferedWriter.write("local_port:"+message);
@@ -61,9 +55,9 @@ public class Chater {
 
 
     static void connectLocalPort(String port){
-        Chater.LOCAL_PORT = Integer.parseInt(port);
-        //перенаправляем listener на этот порт
-        Chater.chat.setPort(Chater.LOCAL_PORT);
+        Integer chaterPort = Integer.parseInt(port);
+        //создаем слушающий поток на этот порт
+        Chater.chat.setPort(chaterPort);
         Chater.chat.start();
     }
 
@@ -75,7 +69,7 @@ public class Chater {
 
         OutputStreamWriter serverOutput = null;
         try {
-            serverOutput = new OutputStreamWriter(socket.getOutputStream());
+            serverOutput = new OutputStreamWriter(serverSocket.getOutputStream());
             //если это не служебная команда, то отправляем на сервер
             BufferedWriter bufferedWriter = new BufferedWriter(serverOutput);
             bufferedWriter.write(chat.getChaterName()+"->"+message);
